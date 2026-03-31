@@ -1,0 +1,57 @@
+{
+  "header": {
+    "home": "Home",
+    "blog": "Blog",
+    "projects": "My Projects",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "My Projects",
+    "description": "These are the projects I work on. Here you can see their real-time traffic metrics, updated every hour. The source code of this page is <link>open source</link>."
+  },
+  "kpi": {
+    "pageviews": "Pageviews",
+    "uniqueVisitors": "Unique Visitors",
+    "sessions": "Sessions",
+    "last3Days": "Last 3 days"
+  },
+  "dashboard": {
+    "projectsSelected": "{count} project selected",
+    "projectsSelectedPlural": "{count} projects selected",
+    "topProjects": "Top Projects",
+    "topProjectsDescription": "Traffic in the last 30 days",
+    "noProjectData": "No project data available.",
+    "views": "views",
+    "sessionsLabel": "sessions",
+    "visitors": "visitors",
+    "pageviewsChart": "Pageviews",
+    "pageviewsChartDescription": "Daily pageviews (30 days)",
+    "sessionsChart": "Sessions",
+    "sessionsChartDescription": "Daily sessions (30 days)",
+    "visitorsChart": "Visitors",
+    "visitorsChartDescription": "Daily unique visitors (30 days)",
+    "noData": "No data"
+  },
+  "filter": {
+    "allProjects": "All projects",
+    "searchPlaceholder": "Search project...",
+    "noResults": "No projects found.",
+    "all": "All"
+  },
+  "footer": {
+    "copyright": "© 2025 Nexans. Made with curiosity and coffee."
+  },
+  "empty": {
+    "emoji": "📊",
+    "title": "No metrics available.",
+    "subtitle": "Come back soon."
+  },
+  "theme": {
+    "system": "System",
+    "dark": "Dark",
+    "light": "Light",
+    "changeTheme": "Change theme",
+    "currentTheme": "Current theme: {theme}. Click to change."
+  }
+}

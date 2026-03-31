@@ -23,22 +23,11 @@ import {
 } from "@/components/ui/chart";
 import { ProjectFilter } from "@/components/DomainFilter";
 import type { AggregatedMetrics, ProjectStats } from "@/lib/posthog";
+import { useTranslations, useLocale } from "next-intl";
 
-const pvChartConfig = {
-  value: { label: "Pageviews", color: "var(--color-chart-1)" },
-} satisfies ChartConfig;
-
-const sessChartConfig = {
-  value: { label: "Sesiones", color: "var(--color-chart-2)" },
-} satisfies ChartConfig;
-
-const visChartConfig = {
-  value: { label: "Visitantes", color: "var(--color-chart-3)" },
-} satisfies ChartConfig;
-
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string, locale: string) {
   const d = new Date(dateStr);
-  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  return d.toLocaleDateString(locale === "es" ? "es-ES" : "en-US", { day: "numeric", month: "short" });
 }
 
 type DashboardProps = {
@@ -47,6 +36,8 @@ type DashboardProps = {
 
 export function Dashboard({ metrics }: DashboardProps) {
   const [selectedProjects, setSelectedProjects] = React.useState<string[]>([]);
+  const t = useTranslations();
+  const locale = useLocale();
 
   const allSelected = selectedProjects.length === 0;
   const topProjects = metrics.topProjects ?? [];
@@ -59,6 +50,18 @@ export function Dashboard({ metrics }: DashboardProps) {
   const sessionsTrend = metrics.sessionsTrend ?? [];
   const visitorsTrend = metrics.visitorsTrend ?? [];
 
+  const pvChartConfig = {
+    value: { label: t("kpi.pageviews"), color: "var(--color-chart-1)" },
+  } satisfies ChartConfig;
+
+  const sessChartConfig = {
+    value: { label: t("kpi.sessions"), color: "var(--color-chart-2)" },
+  } satisfies ChartConfig;
+
+  const visChartConfig = {
+    value: { label: t("dashboard.visitorsChart"), color: "var(--color-chart-3)" },
+  } satisfies ChartConfig;
+
   return (
     <div className="flex flex-col gap-8">
       {/* Filter bar */}
@@ -70,44 +73,46 @@ export function Dashboard({ metrics }: DashboardProps) {
         />
         {!allSelected && (
           <span className="text-sm text-muted-foreground">
-            {selectedProjects.length} proyecto{selectedProjects.length !== 1 ? "s" : ""} seleccionado{selectedProjects.length !== 1 ? "s" : ""}
+            {selectedProjects.length === 1
+              ? t("dashboard.projectsSelected", { count: selectedProjects.length })
+              : t("dashboard.projectsSelectedPlural", { count: selectedProjects.length })}
           </span>
         )}
       </div>
 
-      {/* KPI Cards — últimos 3 días */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Pageviews</CardDescription>
+            <CardDescription>{t("kpi.pageviews")}</CardDescription>
             <CardTitle className="text-3xl tabular-nums">
               {(metrics.recentPageviews ?? 0).toLocaleString("en-US")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Últimos 3 días</p>
+            <p className="text-xs text-muted-foreground">{t("kpi.last3Days")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Visitantes Únicos</CardDescription>
+            <CardDescription>{t("kpi.uniqueVisitors")}</CardDescription>
             <CardTitle className="text-3xl tabular-nums">
               {(metrics.recentVisitors ?? 0).toLocaleString("en-US")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Últimos 3 días</p>
+            <p className="text-xs text-muted-foreground">{t("kpi.last3Days")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Sesiones</CardDescription>
+            <CardDescription>{t("kpi.sessions")}</CardDescription>
             <CardTitle className="text-3xl tabular-nums">
               {(metrics.recentSessions ?? 0).toLocaleString("en-US")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">Últimos 3 días</p>
+            <p className="text-xs text-muted-foreground">{t("kpi.last3Days")}</p>
           </CardContent>
         </Card>
       </div>
@@ -115,19 +120,19 @@ export function Dashboard({ metrics }: DashboardProps) {
       {/* Top Projects */}
       <Card>
         <CardHeader>
-          <CardTitle>Top Proyectos</CardTitle>
+          <CardTitle>{t("dashboard.topProjects")}</CardTitle>
           <CardDescription>
-            Tráfico en los últimos 30 días
+            {t("dashboard.topProjectsDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {filteredProjects.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4">
-              No hay datos de proyectos disponibles.
+              {t("dashboard.noProjectData")}
             </p>
           ) : (
             <div className="space-y-4">
-              {filteredProjects.map((p, i) => {
+              {filteredProjects.map((p) => {
                 const max = filteredProjects[0].pageviews;
                 const pct = max > 0 ? (p.pageviews / max) * 100 : 0;
                 return (
@@ -152,9 +157,9 @@ export function Dashboard({ metrics }: DashboardProps) {
                         )}
                       </span>
                       <div className="flex gap-4 text-xs text-muted-foreground mt-0.5 ml-4">
-                        <span>{p.pageviews.toLocaleString()} vistas</span>
-                        <span>{p.sessions.toLocaleString()} sesiones</span>
-                        <span>{p.visitors.toLocaleString()} visitas</span>
+                        <span>{p.pageviews.toLocaleString()} {t("dashboard.views")}</span>
+                        <span>{p.sessions.toLocaleString()} {t("dashboard.sessionsLabel")}</span>
+                        <span>{p.visitors.toLocaleString()} {t("dashboard.visitors")}</span>
                       </div>
                     </div>
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
@@ -174,22 +179,28 @@ export function Dashboard({ metrics }: DashboardProps) {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <TrendChart
-          title="Pageviews"
-          description="Pageviews diarios (30 días)"
+          title={t("dashboard.pageviewsChart")}
+          description={t("dashboard.pageviewsChartDescription")}
           data={pageviewsTrend}
           config={pvChartConfig}
+          noDataLabel={t("dashboard.noData")}
+          locale={locale}
         />
         <TrendChart
-          title="Sesiones"
-          description="Sesiones diarias (30 días)"
+          title={t("dashboard.sessionsChart")}
+          description={t("dashboard.sessionsChartDescription")}
           data={sessionsTrend}
           config={sessChartConfig}
+          noDataLabel={t("dashboard.noData")}
+          locale={locale}
         />
         <TrendChart
-          title="Visitantes"
-          description="Visitantes únicos diarios (30 días)"
+          title={t("dashboard.visitorsChart")}
+          description={t("dashboard.visitorsChartDescription")}
           data={visitorsTrend}
           config={visChartConfig}
+          noDataLabel={t("dashboard.noData")}
+          locale={locale}
         />
       </div>
     </div>
@@ -201,11 +212,15 @@ function TrendChart({
   description,
   data,
   config,
+  noDataLabel,
+  locale,
 }: {
   title: string;
   description: string;
   data: { date: string; value: number }[];
   config: ChartConfig;
+  noDataLabel: string;
+  locale: string;
 }) {
   return (
     <Card>
@@ -216,7 +231,7 @@ function TrendChart({
       <CardContent>
         {data.length === 0 ? (
           <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">
-            Sin datos
+            {noDataLabel}
           </div>
         ) : (
           <ChartContainer config={config} className="h-[200px] w-full">
@@ -233,7 +248,7 @@ function TrendChart({
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={formatDate}
+                tickFormatter={(v) => formatDate(v, locale)}
                 interval="preserveStartEnd"
                 minTickGap={40}
               />
@@ -249,7 +264,7 @@ function TrendChart({
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(label) => formatDate(String(label))}
+                    labelFormatter={(label) => formatDate(String(label), locale)}
                   />
                 }
               />

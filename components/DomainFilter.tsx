@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { ProjectStats } from "@/lib/posthog";
+import { useTranslations } from "next-intl";
 
 type ProjectFilterProps = {
   projects: ProjectStats[];
@@ -26,6 +27,7 @@ type ProjectFilterProps = {
 
 export function ProjectFilter({ projects, selected, onChange }: ProjectFilterProps) {
   const [open, setOpen] = React.useState(false);
+  const t = useTranslations("filter");
 
   const allSelected = selected.length === 0;
 
@@ -58,7 +60,7 @@ export function ProjectFilter({ projects, selected, onChange }: ProjectFilterPro
           <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
         </svg>
         {allSelected ? (
-          <span className="text-muted-foreground">Todos los proyectos</span>
+          <span className="text-foreground">{t("allProjects")}</span>
         ) : (
           <span className="flex flex-wrap gap-1">
             {selected.map((name) => (
@@ -71,13 +73,13 @@ export function ProjectFilter({ projects, selected, onChange }: ProjectFilterPro
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0" align="start">
         <Command>
-          <CommandInput placeholder="Buscar proyecto..." />
+          <CommandInput placeholder={t("searchPlaceholder")} />
           <CommandList>
-            <CommandEmpty>No se encontraron proyectos.</CommandEmpty>
+            <CommandEmpty>{t("noResults")}</CommandEmpty>
             <CommandGroup>
               <CommandItem onSelect={clearAll}>
                 <Checkbox checked={allSelected} className="mr-2" />
-                <span className="font-medium">Todos</span>
+                <span className="font-medium">{t("all")}</span>
               </CommandItem>
               {projects.map((project) => (
                 <CommandItem key={project.name} onSelect={() => toggle(project.name)}>

@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 const socialLinks = [
   {
     name: "YouTube",
@@ -42,6 +46,8 @@ const socialLinks = [
 ];
 
 export function Footer() {
+  const t = useTranslations("footer");
+
   return (
     <footer className="border-t border-border bg-background mt-16">
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
@@ -60,7 +66,7 @@ export function Footer() {
             ))}
           </div>
           <p className="text-muted-foreground text-xs text-center font-sans">
-            © 2025 Nexans. Hecho con curiosidad y café.
+            {t("copyright")}
           </p>
         </div>
 
@@ -82,7 +88,7 @@ export function Footer() {
           </div>
           <div className="flex justify-center">
             <p className="text-muted-foreground text-sm text-center font-sans">
-              © 2025 Nexans. Hecho con curiosidad y café.
+              {t("copyright")}
             </p>
           </div>
         </div>
@@ -91,7 +97,7 @@ export function Footer() {
         <div className="hidden lg:block">
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground text-sm font-sans">
-              © 2025 Nexans. Hecho con curiosidad y café.
+              {t("copyright")}
             </p>
             <div className="flex items-center gap-4">
               {socialLinks.map((link) => (

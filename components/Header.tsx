@@ -1,18 +1,12 @@
 "use client";
 
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 
 const title = "CN.";
 
-const navItems = [
-  { name: "Home", href: "https://cnexans.com" },
-  { name: "Blog", href: "https://cnexans.com/blog" },
-  { name: "Mis proyectos", href: null },
-  { name: "About", href: "https://cnexans.com/about" },
-  { name: "Contact", href: "https://cnexans.com/contact" },
-];
-
-function NavLink({ item }: { item: (typeof navItems)[number] }) {
+function NavLink({ item }: { item: { name: string; href: string | null } }) {
   if (item.href) {
     return (
       <a
@@ -29,6 +23,16 @@ function NavLink({ item }: { item: (typeof navItems)[number] }) {
 }
 
 export function Header() {
+  const t = useTranslations("header");
+
+  const navItems = [
+    { name: t("home"), href: "https://cnexans.com" },
+    { name: t("blog"), href: "https://cnexans.com/blog" },
+    { name: t("projects"), href: null },
+    { name: t("about"), href: "https://cnexans.com/about" },
+    { name: t("contact"), href: "https://cnexans.com/contact" },
+  ];
+
   return (
     <header className="border-b border-border bg-background sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
@@ -47,7 +51,8 @@ export function Header() {
               <NavLink key={item.name} item={item} />
             ))}
           </nav>
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-2">
+            <LanguageSwitcher />
             <ThemeSwitcher />
           </div>
         </div>
@@ -67,7 +72,8 @@ export function Header() {
               ))}
             </nav>
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-2">
+            <LanguageSwitcher />
             <ThemeSwitcher />
           </div>
         </div>
@@ -85,6 +91,7 @@ export function Header() {
               {navItems.map((item) => (
                 <NavLink key={item.name} item={item} />
               ))}
+              <LanguageSwitcher />
               <ThemeSwitcher />
             </nav>
           </div>

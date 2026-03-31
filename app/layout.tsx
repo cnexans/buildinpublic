@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono, Merienda } from "next/font/google";
 import "./globals.css";
 
@@ -18,12 +17,6 @@ const merienda = Merienda({
   weight: ["400", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "My Metrics — Public Dashboard",
-  description:
-    "Open metrics from my projects, powered by PostHog. Refreshed every hour.",
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,7 +24,6 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${merienda.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

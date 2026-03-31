@@ -1,0 +1,57 @@
+{
+  "header": {
+    "home": "Home",
+    "blog": "Blog",
+    "projects": "Mis proyectos",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "hero": {
+    "title": "Mis proyectos",
+    "description": "Estos son los proyectos en los que trabajo. Aquí puedes ver sus métricas de tráfico en tiempo real, actualizadas cada hora. El código fuente de esta página es <link>open source</link>."
+  },
+  "kpi": {
+    "pageviews": "Pageviews",
+    "uniqueVisitors": "Visitantes Únicos",
+    "sessions": "Sesiones",
+    "last3Days": "Últimos 3 días"
+  },
+  "dashboard": {
+    "projectsSelected": "{count} proyecto seleccionado",
+    "projectsSelectedPlural": "{count} proyectos seleccionados",
+    "topProjects": "Top Proyectos",
+    "topProjectsDescription": "Tráfico en los últimos 30 días",
+    "noProjectData": "No hay datos de proyectos disponibles.",
+    "views": "vistas",
+    "sessionsLabel": "sesiones",
+    "visitors": "visitas",
+    "pageviewsChart": "Pageviews",
+    "pageviewsChartDescription": "Pageviews diarios (30 días)",
+    "sessionsChart": "Sesiones",
+    "sessionsChartDescription": "Sesiones diarias (30 días)",
+    "visitorsChart": "Visitantes",
+    "visitorsChartDescription": "Visitantes únicos diarios (30 días)",
+    "noData": "Sin datos"
+  },
+  "filter": {
+    "allProjects": "Todos los proyectos",
+    "searchPlaceholder": "Buscar proyecto...",
+    "noResults": "No se encontraron proyectos.",
+    "all": "Todos"
+  },
+  "footer": {
+    "copyright": "© 2025 Nexans. Hecho con curiosidad y café."
+  },
+  "empty": {
+    "emoji": "📊",
+    "title": "No hay métricas disponibles.",
+    "subtitle": "Vuelve pronto."
+  },
+  "theme": {
+    "system": "Sistema",
+    "dark": "Oscuro",
+    "light": "Claro",
+    "changeTheme": "Cambiar tema",
+    "currentTheme": "Tema actual: {theme}. Click para cambiar."
+  }
+}

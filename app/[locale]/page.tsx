@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { fetchAggregatedMetrics } from "@/lib/posthog";
 import type { AggregatedMetrics } from "@/lib/posthog";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
 export const revalidate = 3600;
 
@@ -15,7 +16,14 @@ async function getMetrics(): Promise<AggregatedMetrics | null> {
   }
 }
 
-export default async function Home() {
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations();
   const metrics = await getMetrics();
 
   return (
@@ -26,21 +34,21 @@ export default async function Home() {
         {/* Hero */}
         <section>
           <h1 className="text-4xl md:text-5xl font-bold font-serif tracking-tight mb-2">
-            Mis proyectos
+            {t("hero.title")}
           </h1>
-          <p className="text-muted-foreground font-serif">
-            Estos son los proyectos en los que trabajo. Aquí puedes ver sus métricas
-            de tráfico en tiempo real, actualizadas cada hora.
-            El código fuente de esta página es{" "}
-            <a
-              href="https://github.com/cnexans/buildinpublic"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground transition-colors"
-            >
-              open source
-            </a>
-            .
+          <p className="text-foreground font-serif">
+            {t.rich("hero.description", {
+              link: (chunks) => (
+                <a
+                  href="https://github.com/cnexans/buildinpublic"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground transition-colors"
+                >
+                  {chunks}
+                </a>
+              ),
+            })}
           </p>
         </section>
 
@@ -49,9 +57,9 @@ export default async function Home() {
           <Dashboard metrics={metrics} />
         ) : (
           <div className="text-center py-20 text-muted-foreground">
-            <p className="text-5xl mb-4">📊</p>
-            <p className="font-semibold">No hay métricas disponibles.</p>
-            <p className="text-sm mt-1">Vuelve pronto.</p>
+            <p className="text-5xl mb-4">{t("empty.emoji")}</p>
+            <p className="font-semibold">{t("empty.title")}</p>
+            <p className="text-sm mt-1">{t("empty.subtitle")}</p>
           </div>
         )}
       </main>
