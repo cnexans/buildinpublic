@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { fetchAllMetrics } from "@/lib/posthog";
+import { fetchAggregatedMetrics } from "@/lib/posthog";
 
-// Revalidate cache every hour (3600 seconds)
 export const revalidate = 3600;
 
 export async function GET() {
   try {
-    const metrics = await fetchAllMetrics();
+    const metrics = await fetchAggregatedMetrics();
     return NextResponse.json(metrics, {
       headers: {
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=60",

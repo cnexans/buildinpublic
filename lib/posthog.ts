@@ -1,27 +1,103 @@
 const POSTHOG_HOST = process.env.POSTHOG_HOST || "https://us.posthog.com";
 const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY!;
 
-export type ProjectConfig = {
-  id: number;
+// Project IDs are configured via env var as comma-separated values, e.g. "46842,87013"
+const POSTHOG_PROJECT_IDS = (process.env.POSTHOG_PROJECT_IDS || "")
+  .split(",")
+  .map((id) => parseInt(id.trim(), 10))
+  .filter((id) => !isNaN(id));
+
+// Map domains to projects via regex patterns.
+// First match wins. Unmatched non-empty domains go to "Otros".
+// Private projects (private: true) count in totals but show masked name in the list.
+export type ProjectMapping = {
   name: string;
-  orgName: string;
-  token: string;
+  url?: string;
+  patterns: RegExp[];
+  private?: boolean;
+  color: string;
 };
 
-export const PROJECTS: ProjectConfig[] = [
+export const PROJECT_MAPPINGS: ProjectMapping[] = [
   {
-    id: 46842,
-    name: "Planify",
-    orgName: "Nexans Biz Holding",
-    token: "phc_NNRUyC7CBDfr8iFffRYL0njEqOL28SDrm5ydLnFiEIw",
+    name: "Mana",
+    url: "https://mana.planify.la",
+    patterns: [/^mana\.planify\.la$/],
+    color: "#8B5CF6",
   },
   {
-    id: 87013,
-    name: "Default",
-    orgName: "Personal",
-    token: "phc_V86sv23tZmpoIKoMxp8E9nd3w3BxMM5vw5GYtZlOXrY",
+    name: "Planify",
+    url: "https://planify.la",
+    patterns: [/planify/i],
+    color: "#2563EB",
+  },
+  {
+    name: "Impuestito",
+    url: "https://impuesti.to",
+    patterns: [/gananciasfacil/i, /impuesti\.to/i],
+    color: "#059669",
+  },
+  {
+    name: "PanaUber",
+    url: "https://panauber.vercel.app",
+    patterns: [/panauber/i],
+    color: "#D97706",
+  },
+  // Private domains configured via PRIVATE_DOMAIN_PATTERNS env var
+  // (comma-separated patterns, e.g. "myapp,secret-project")
+  ...(process.env.PRIVATE_DOMAIN_PATTERNS
+    ? [
+        {
+          name: "Apps de particulares",
+          private: true,
+          patterns: process.env.PRIVATE_DOMAIN_PATTERNS.split(",").map(
+            (p) => new RegExp(p.trim(), "i")
+          ),
+          color: "#DC2626",
+        },
+      ]
+    : []),
+  {
+    name: "Mi Libro de Matemática",
+    url: "https://codex.cnexans.com",
+    patterns: [/codex/i],
+    color: "#0891B2",
+  },
+  {
+    name: "Mi sitio web",
+    url: "https://cnexans.com",
+    patterns: [/cnexans\.com$/, /carlosnexans/i, /home-kohl/i],
+    color: "#DB2777",
   },
 ];
+
+export type DailyPoint = { date: string; value: number };
+
+export type ProjectStats = {
+  name: string;
+  url?: string;
+  private?: boolean;
+  color: string;
+  pageviews: number;
+  sessions: number;
+  visitors: number;
+  domains: string[];
+};
+
+export type AggregatedMetrics = {
+  totalPageviews: number;
+  totalSessions: number;
+  totalVisitors: number;
+  recentPageviews: number;
+  recentSessions: number;
+  recentVisitors: number;
+  pageviewsTrend: DailyPoint[];
+  sessionsTrend: DailyPoint[];
+  visitorsTrend: DailyPoint[];
+  topProjects: ProjectStats[];
+  allProjects: string[];
+  fetchedAt: string;
+};
 
 async function posthogFetch(path: string, options?: RequestInit) {
   const url = `${POSTHOG_HOST}${path}`;
@@ -38,18 +114,6 @@ async function posthogFetch(path: string, options?: RequestInit) {
   }
   return res.json();
 }
-
-export type ProjectMetrics = {
-  projectId: number;
-  projectName: string;
-  orgName: string;
-  pageviews: number;
-  uniqueVisitors: number;
-  sessions: number;
-  pageviewsTrend: { date: string; value: number }[];
-  topPages: { url: string; count: number }[];
-  fetchedAt: string;
-};
 
 function getDateRange() {
   const to = new Date();
@@ -73,111 +137,231 @@ async function queryHogQL(projectId: number, query: string) {
   });
 }
 
-export async function fetchProjectMetrics(
-  project: ProjectConfig
-): Promise<ProjectMetrics> {
+type DomainStats = {
+  domain: string;
+  pageviews: number;
+  sessions: number;
+  visitors: number;
+};
+
+type RawRow = [string, number];
+type RawDomainRow = [string, number, number, number];
+
+async function fetchProjectData(projectId: number) {
   const { date_from, date_to } = getDateRange();
 
-  const [pvResult, uvResult, sessResult, trendResult, topPagesResult] =
-    await Promise.allSettled([
-      // Total pageviews
-      queryHogQL(
-        project.id,
-        `SELECT count() FROM events
-         WHERE event = '$pageview'
-           AND timestamp >= '${date_from}'
-           AND timestamp <= '${date_to}'`
-      ),
-      // Unique visitors (distinct_id)
-      queryHogQL(
-        project.id,
-        `SELECT count(DISTINCT distinct_id) FROM events
-         WHERE event = '$pageview'
-           AND timestamp >= '${date_from}'
-           AND timestamp <= '${date_to}'`
-      ),
-      // Unique sessions
-      queryHogQL(
-        project.id,
-        `SELECT count(DISTINCT properties.$session_id) FROM events
-         WHERE event = '$pageview'
-           AND timestamp >= '${date_from}'
-           AND timestamp <= '${date_to}'
-           AND properties.$session_id IS NOT NULL`
-      ),
-      // Daily pageviews trend
-      queryHogQL(
-        project.id,
-        `SELECT toDate(timestamp) as day, count() as cnt
-         FROM events
-         WHERE event = '$pageview'
-           AND timestamp >= '${date_from}'
-           AND timestamp <= '${date_to}'
-         GROUP BY day
-         ORDER BY day ASC`
-      ),
-      // Top pages
-      queryHogQL(
-        project.id,
-        `SELECT properties.$current_url as url, count() as cnt
-         FROM events
-         WHERE event = '$pageview'
-           AND timestamp >= '${date_from}'
-           AND timestamp <= '${date_to}'
-           AND properties.$current_url IS NOT NULL
-         GROUP BY url
-         ORDER BY cnt DESC
-         LIMIT 10`
-      ),
-    ]);
+  const [
+    pvTrendResult,
+    sessTrendResult,
+    visTrendResult,
+    domainResult,
+  ] = await Promise.allSettled([
+    // Daily pageviews
+    queryHogQL(
+      projectId,
+      `SELECT toDate(timestamp) as day, count() as cnt
+       FROM events
+       WHERE event = '$pageview'
+         AND timestamp >= '${date_from}'
+         AND timestamp <= '${date_to}'
+       GROUP BY day
+       ORDER BY day ASC`
+    ),
+    // Daily sessions
+    queryHogQL(
+      projectId,
+      `SELECT toDate(timestamp) as day, count(DISTINCT properties.$session_id) as cnt
+       FROM events
+       WHERE event = '$pageview'
+         AND timestamp >= '${date_from}'
+         AND timestamp <= '${date_to}'
+         AND properties.$session_id IS NOT NULL
+       GROUP BY day
+       ORDER BY day ASC`
+    ),
+    // Daily unique visitors
+    queryHogQL(
+      projectId,
+      `SELECT toDate(timestamp) as day, count(DISTINCT distinct_id) as cnt
+       FROM events
+       WHERE event = '$pageview'
+         AND timestamp >= '${date_from}'
+         AND timestamp <= '${date_to}'
+       GROUP BY day
+       ORDER BY day ASC`
+    ),
+    // Domain stats (pageviews, sessions, visitors per domain)
+    queryHogQL(
+      projectId,
+      `SELECT
+         domain(properties.$current_url) as dom,
+         count() as pvs,
+         count(DISTINCT properties.$session_id) as sess,
+         count(DISTINCT distinct_id) as vis
+       FROM events
+       WHERE event = '$pageview'
+         AND timestamp >= '${date_from}'
+         AND timestamp <= '${date_to}'
+         AND properties.$current_url IS NOT NULL
+       GROUP BY dom
+       ORDER BY pvs DESC
+       LIMIT 50`
+    ),
+  ]);
 
-  const pageviews =
-    pvResult.status === "fulfilled"
-      ? (pvResult.value?.results?.[0]?.[0] ?? 0)
-      : 0;
+  const pvTrend: DailyPoint[] =
+    pvTrendResult.status === "fulfilled"
+      ? (pvTrendResult.value?.results ?? []).map(([day, cnt]: RawRow) => ({
+          date: day,
+          value: cnt,
+        }))
+      : [];
 
-  const uniqueVisitors =
-    uvResult.status === "fulfilled"
-      ? (uvResult.value?.results?.[0]?.[0] ?? 0)
-      : 0;
+  const sessTrend: DailyPoint[] =
+    sessTrendResult.status === "fulfilled"
+      ? (sessTrendResult.value?.results ?? []).map(([day, cnt]: RawRow) => ({
+          date: day,
+          value: cnt,
+        }))
+      : [];
 
-  const sessions =
-    sessResult.status === "fulfilled"
-      ? (sessResult.value?.results?.[0]?.[0] ?? 0)
-      : 0;
+  const visTrend: DailyPoint[] =
+    visTrendResult.status === "fulfilled"
+      ? (visTrendResult.value?.results ?? []).map(([day, cnt]: RawRow) => ({
+          date: day,
+          value: cnt,
+        }))
+      : [];
 
-  const pageviewsTrend: { date: string; value: number }[] =
-    trendResult.status === "fulfilled"
-      ? (trendResult.value?.results ?? []).map(
-          ([day, cnt]: [string, number]) => ({ date: day, value: cnt })
+  const domains: DomainStats[] =
+    domainResult.status === "fulfilled"
+      ? (domainResult.value?.results ?? []).map(
+          ([dom, pvs, sess, vis]: RawDomainRow) => ({
+            domain: dom,
+            pageviews: pvs,
+            sessions: sess,
+            visitors: vis,
+          })
         )
       : [];
 
-  const topPages: { url: string; count: number }[] =
-    topPagesResult.status === "fulfilled"
-      ? (topPagesResult.value?.results ?? []).map(
-          ([url, cnt]: [string, number]) => ({ url, count: cnt })
-        )
-      : [];
-
-  return {
-    projectId: project.id,
-    projectName: project.name,
-    orgName: project.orgName,
-    pageviews,
-    uniqueVisitors,
-    sessions,
-    pageviewsTrend,
-    topPages,
-    fetchedAt: new Date().toISOString(),
-  };
+  return { pvTrend, sessTrend, visTrend, domains };
 }
 
-export async function fetchAllMetrics(): Promise<ProjectMetrics[]> {
+function mergeTrends(
+  ...trendArrays: DailyPoint[][]
+): DailyPoint[] {
+  const map = new Map<string, number>();
+  for (const trends of trendArrays) {
+    for (const point of trends) {
+      map.set(point.date, (map.get(point.date) ?? 0) + point.value);
+    }
+  }
+  return Array.from(map.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, value]) => ({ date, value }));
+}
+
+function mergeDomains(...domainArrays: DomainStats[][]): DomainStats[] {
+  const map = new Map<string, DomainStats>();
+  for (const domains of domainArrays) {
+    for (const d of domains) {
+      if (!d.domain || d.domain.trim() === "") continue;
+      const existing = map.get(d.domain);
+      if (existing) {
+        existing.pageviews += d.pageviews;
+        existing.sessions += d.sessions;
+        existing.visitors += d.visitors;
+      } else {
+        map.set(d.domain, { ...d });
+      }
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => b.pageviews - a.pageviews);
+}
+
+function resolveProject(domain: string): ProjectMapping | null {
+  for (const mapping of PROJECT_MAPPINGS) {
+    if (mapping.patterns.some((p) => p.test(domain))) {
+      return mapping;
+    }
+  }
+  return null;
+}
+
+function groupDomainsIntoProjects(domains: DomainStats[]): ProjectStats[] {
+  const map = new Map<string, ProjectStats>();
+
+  for (const d of domains) {
+    const mapping = resolveProject(d.domain);
+    const name = mapping?.name ?? d.domain;
+
+    const existing = map.get(name);
+    if (existing) {
+      existing.pageviews += d.pageviews;
+      existing.sessions += d.sessions;
+      existing.visitors += d.visitors;
+      if (!existing.domains.includes(d.domain)) {
+        existing.domains.push(d.domain);
+      }
+    } else {
+      map.set(name, {
+        name,
+        url: mapping?.url,
+        private: mapping?.private,
+        color: mapping?.color ?? "#6B7280",
+        pageviews: d.pageviews,
+        sessions: d.sessions,
+        visitors: d.visitors,
+        domains: [d.domain],
+      });
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.pageviews - a.pageviews);
+}
+
+export async function fetchAggregatedMetrics(): Promise<AggregatedMetrics> {
   const results = await Promise.allSettled(
-    PROJECTS.map((p) => fetchProjectMetrics(p))
+    POSTHOG_PROJECT_IDS.map((id) => fetchProjectData(id))
   );
-  return results
+
+  const fulfilled = results
     .filter((r) => r.status === "fulfilled")
-    .map((r) => (r as PromiseFulfilledResult<ProjectMetrics>).value);
+    .map((r) => (r as PromiseFulfilledResult<Awaited<ReturnType<typeof fetchProjectData>>>).value);
+
+  const pageviewsTrend = mergeTrends(...fulfilled.map((f) => f.pvTrend));
+  const sessionsTrend = mergeTrends(...fulfilled.map((f) => f.sessTrend));
+  const visitorsTrend = mergeTrends(...fulfilled.map((f) => f.visTrend));
+  const allDomains = mergeDomains(...fulfilled.map((f) => f.domains));
+  const topProjects = groupDomainsIntoProjects(allDomains);
+
+  const totalPageviews = topProjects.reduce((s, p) => s + p.pageviews, 0);
+  const totalSessions = topProjects.reduce((s, p) => s + p.sessions, 0);
+  const totalVisitors = topProjects.reduce((s, p) => s + p.visitors, 0);
+
+  // Last 3 days totals from trends
+  const sumLast3 = (trend: DailyPoint[]) =>
+    trend.slice(-3).reduce((s, p) => s + p.value, 0);
+
+  const recentPageviews = sumLast3(pageviewsTrend);
+  const recentSessions = sumLast3(sessionsTrend);
+  const recentVisitors = sumLast3(visitorsTrend);
+
+  const allProjectNames = topProjects.map((p) => p.name);
+
+  return {
+    totalPageviews,
+    totalSessions,
+    totalVisitors,
+    recentPageviews,
+    recentSessions,
+    recentVisitors,
+    pageviewsTrend,
+    sessionsTrend,
+    visitorsTrend,
+    topProjects,
+    allProjects: allProjectNames,
+    fetchedAt: new Date().toISOString(),
+  };
 }
