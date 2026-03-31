@@ -11,14 +11,14 @@ function NavLink({ item }: { item: { name: string; href: string | null } }) {
     return (
       <a
         href={item.href}
-        className="text-sm text-foreground no-underline hover:text-primary transition-colors"
+        className="text-foreground no-underline hover:text-primary transition-colors"
       >
         {item.name}
       </a>
     );
   }
   return (
-    <span className="text-sm text-primary font-medium">{item.name}</span>
+    <span className="text-primary font-medium">{item.name}</span>
   );
 }
 
