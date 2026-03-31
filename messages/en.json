@@ -14,7 +14,8 @@
     "pageviews": "Pageviews",
     "uniqueVisitors": "Unique Visitors",
     "sessions": "Sessions",
-    "last3Days": "Last 3 days"
+    "last3Days": "Last 3 days",
+    "last30Days": "Last 30 days"
   },
   "dashboard": {
     "projectsSelected": "{count} project selected",

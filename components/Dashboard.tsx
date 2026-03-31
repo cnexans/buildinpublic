@@ -46,6 +46,16 @@ export function Dashboard({ metrics }: DashboardProps) {
     ? topProjects
     : topProjects.filter((p) => selectedProjects.includes(p.name));
 
+  const kpiPageviews = allSelected
+    ? (metrics.recentPageviews ?? 0)
+    : filteredProjects.reduce((s, p) => s + p.pageviews, 0);
+  const kpiVisitors = allSelected
+    ? (metrics.recentVisitors ?? 0)
+    : filteredProjects.reduce((s, p) => s + p.visitors, 0);
+  const kpiSessions = allSelected
+    ? (metrics.recentSessions ?? 0)
+    : filteredProjects.reduce((s, p) => s + p.sessions, 0);
+
   const pageviewsTrend = metrics.pageviewsTrend ?? [];
   const sessionsTrend = metrics.sessionsTrend ?? [];
   const visitorsTrend = metrics.visitorsTrend ?? [];
@@ -86,33 +96,33 @@ export function Dashboard({ metrics }: DashboardProps) {
           <CardHeader className="pb-2">
             <CardDescription>{t("kpi.pageviews")}</CardDescription>
             <CardTitle className="text-3xl tabular-nums">
-              {(metrics.recentPageviews ?? 0).toLocaleString("en-US")}
+              {kpiPageviews.toLocaleString("en-US")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">{t("kpi.last3Days")}</p>
+            <p className="text-xs text-muted-foreground">{allSelected ? t("kpi.last3Days") : t("kpi.last30Days")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>{t("kpi.uniqueVisitors")}</CardDescription>
             <CardTitle className="text-3xl tabular-nums">
-              {(metrics.recentVisitors ?? 0).toLocaleString("en-US")}
+              {kpiVisitors.toLocaleString("en-US")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">{t("kpi.last3Days")}</p>
+            <p className="text-xs text-muted-foreground">{allSelected ? t("kpi.last3Days") : t("kpi.last30Days")}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>{t("kpi.sessions")}</CardDescription>
             <CardTitle className="text-3xl tabular-nums">
-              {(metrics.recentSessions ?? 0).toLocaleString("en-US")}
+              {kpiSessions.toLocaleString("en-US")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-muted-foreground">{t("kpi.last3Days")}</p>
+            <p className="text-xs text-muted-foreground">{allSelected ? t("kpi.last3Days") : t("kpi.last30Days")}</p>
           </CardContent>
         </Card>
       </div>
