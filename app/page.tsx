@@ -32,6 +32,18 @@ export default async function Home() {
             Estos son los proyectos en los que trabajo. Aquí puedes ver sus métricas
             de tráfico en tiempo real, actualizadas cada hora.
           </p>
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            El código fuente de esta página es{" "}
+            <a
+              href="https://github.com/cnexans/buildinpublic"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground transition-colors"
+            >
+              open source
+            </a>
+            .
+          </p>
         </section>
 
         {/* Dashboard */}
