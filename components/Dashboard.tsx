@@ -56,9 +56,29 @@ export function Dashboard({ metrics }: DashboardProps) {
     ? (metrics.recentSessions ?? 0)
     : filteredProjects.reduce((s, p) => s + p.sessions, 0);
 
-  const pageviewsTrend = metrics.pageviewsTrend ?? [];
-  const sessionsTrend = metrics.sessionsTrend ?? [];
-  const visitorsTrend = metrics.visitorsTrend ?? [];
+  const pageviewsTrend = allSelected
+    ? (metrics.pageviewsTrend ?? [])
+    : filteredProjects.reduce<{ date: string; value: number }[]>((acc, p) => {
+        const map = new Map(acc.map((d) => [d.date, d.value]));
+        for (const pt of p.pvTrend) map.set(pt.date, (map.get(pt.date) ?? 0) + pt.value);
+        return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, value }));
+      }, []);
+
+  const sessionsTrend = allSelected
+    ? (metrics.sessionsTrend ?? [])
+    : filteredProjects.reduce<{ date: string; value: number }[]>((acc, p) => {
+        const map = new Map(acc.map((d) => [d.date, d.value]));
+        for (const pt of p.sessTrend) map.set(pt.date, (map.get(pt.date) ?? 0) + pt.value);
+        return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, value }));
+      }, []);
+
+  const visitorsTrend = allSelected
+    ? (metrics.visitorsTrend ?? [])
+    : filteredProjects.reduce<{ date: string; value: number }[]>((acc, p) => {
+        const map = new Map(acc.map((d) => [d.date, d.value]));
+        for (const pt of p.visTrend) map.set(pt.date, (map.get(pt.date) ?? 0) + pt.value);
+        return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, value }));
+      }, []);
 
   const pvChartConfig = {
     value: { label: t("kpi.pageviews"), color: "var(--color-chart-1)" },

@@ -82,6 +82,9 @@ export type ProjectStats = {
   sessions: number;
   visitors: number;
   domains: string[];
+  pvTrend: DailyPoint[];
+  sessTrend: DailyPoint[];
+  visTrend: DailyPoint[];
 };
 
 export type AggregatedMetrics = {
@@ -144,140 +147,41 @@ type DomainStats = {
   visitors: number;
 };
 
-type RawRow = [string, number];
-type RawDomainRow = [string, number, number, number];
+type RawDomainDailyRow = [string, string, number, number, number]; // day, domain, pvs, sess, vis
 
 async function fetchProjectData(projectId: number) {
   const { date_from, date_to } = getDateRange();
 
-  const [
-    pvTrendResult,
-    sessTrendResult,
-    visTrendResult,
-    domainResult,
-  ] = await Promise.allSettled([
-    // Daily pageviews
-    queryHogQL(
-      projectId,
-      `SELECT toDate(timestamp) as day, count() as cnt
-       FROM events
-       WHERE event = '$pageview'
-         AND timestamp >= '${date_from}'
-         AND timestamp <= '${date_to}'
-       GROUP BY day
-       ORDER BY day ASC`
-    ),
-    // Daily sessions
-    queryHogQL(
-      projectId,
-      `SELECT toDate(timestamp) as day, count(DISTINCT properties.$session_id) as cnt
-       FROM events
-       WHERE event = '$pageview'
-         AND timestamp >= '${date_from}'
-         AND timestamp <= '${date_to}'
-         AND properties.$session_id IS NOT NULL
-       GROUP BY day
-       ORDER BY day ASC`
-    ),
-    // Daily unique visitors
-    queryHogQL(
-      projectId,
-      `SELECT toDate(timestamp) as day, count(DISTINCT distinct_id) as cnt
-       FROM events
-       WHERE event = '$pageview'
-         AND timestamp >= '${date_from}'
-         AND timestamp <= '${date_to}'
-       GROUP BY day
-       ORDER BY day ASC`
-    ),
-    // Domain stats (pageviews, sessions, visitors per domain)
-    queryHogQL(
-      projectId,
-      `SELECT
-         domain(properties.$current_url) as dom,
-         count() as pvs,
-         count(DISTINCT properties.$session_id) as sess,
-         count(DISTINCT distinct_id) as vis
-       FROM events
-       WHERE event = '$pageview'
-         AND timestamp >= '${date_from}'
-         AND timestamp <= '${date_to}'
-         AND properties.$current_url IS NOT NULL
-       GROUP BY dom
-       ORDER BY pvs DESC
-       LIMIT 50`
-    ),
-  ]);
+  // Single query: daily stats per domain — derives both totals and trends
+  const result = await queryHogQL(
+    projectId,
+    `SELECT
+       toDate(timestamp) as day,
+       domain(properties.$current_url) as dom,
+       count() as pvs,
+       count(DISTINCT properties.$session_id) as sess,
+       count(DISTINCT distinct_id) as vis
+     FROM events
+     WHERE event = '$pageview'
+       AND timestamp >= '${date_from}'
+       AND timestamp <= '${date_to}'
+       AND properties.$current_url IS NOT NULL
+     GROUP BY day, dom
+     ORDER BY day ASC`
+  );
 
-  const pvTrend: DailyPoint[] =
-    pvTrendResult.status === "fulfilled"
-      ? (pvTrendResult.value?.results ?? []).map(([day, cnt]: RawRow) => ({
-          date: day,
-          value: cnt,
-        }))
-      : [];
-
-  const sessTrend: DailyPoint[] =
-    sessTrendResult.status === "fulfilled"
-      ? (sessTrendResult.value?.results ?? []).map(([day, cnt]: RawRow) => ({
-          date: day,
-          value: cnt,
-        }))
-      : [];
-
-  const visTrend: DailyPoint[] =
-    visTrendResult.status === "fulfilled"
-      ? (visTrendResult.value?.results ?? []).map(([day, cnt]: RawRow) => ({
-          date: day,
-          value: cnt,
-        }))
-      : [];
-
-  const domains: DomainStats[] =
-    domainResult.status === "fulfilled"
-      ? (domainResult.value?.results ?? []).map(
-          ([dom, pvs, sess, vis]: RawDomainRow) => ({
-            domain: dom,
-            pageviews: pvs,
-            sessions: sess,
-            visitors: vis,
-          })
-        )
-      : [];
-
-  return { pvTrend, sessTrend, visTrend, domains };
+  const rows: RawDomainDailyRow[] = result?.results ?? [];
+  return { rows };
 }
 
-function mergeTrends(
-  ...trendArrays: DailyPoint[][]
-): DailyPoint[] {
-  const map = new Map<string, number>();
-  for (const trends of trendArrays) {
-    for (const point of trends) {
-      map.set(point.date, (map.get(point.date) ?? 0) + point.value);
-    }
-  }
+function addToTrendMap(map: Map<string, number>, date: string, value: number) {
+  map.set(date, (map.get(date) ?? 0) + value);
+}
+
+function trendMapToPoints(map: Map<string, number>): DailyPoint[] {
   return Array.from(map.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, value]) => ({ date, value }));
-}
-
-function mergeDomains(...domainArrays: DomainStats[][]): DomainStats[] {
-  const map = new Map<string, DomainStats>();
-  for (const domains of domainArrays) {
-    for (const d of domains) {
-      if (!d.domain || d.domain.trim() === "") continue;
-      const existing = map.get(d.domain);
-      if (existing) {
-        existing.pageviews += d.pageviews;
-        existing.sessions += d.sessions;
-        existing.visitors += d.visitors;
-      } else {
-        map.set(d.domain, { ...d });
-      }
-    }
-  }
-  return Array.from(map.values()).sort((a, b) => b.pageviews - a.pageviews);
 }
 
 function resolveProject(domain: string): ProjectMapping | null {
@@ -289,36 +193,90 @@ function resolveProject(domain: string): ProjectMapping | null {
   return null;
 }
 
-function groupDomainsIntoProjects(domains: DomainStats[]): ProjectStats[] {
-  const map = new Map<string, ProjectStats>();
+type ProjectAccumulator = {
+  name: string;
+  url?: string;
+  private?: boolean;
+  color: string;
+  pageviews: number;
+  sessions: number;
+  visitors: number;
+  domains: string[];
+  pvMap: Map<string, number>;
+  sessMap: Map<string, number>;
+  visMap: Map<string, number>;
+};
 
-  for (const d of domains) {
-    const mapping = resolveProject(d.domain);
-    const name = mapping?.name ?? d.domain;
+function processAllRows(allRows: RawDomainDailyRow[]): {
+  projects: ProjectStats[];
+  pageviewsTrend: DailyPoint[];
+  sessionsTrend: DailyPoint[];
+  visitorsTrend: DailyPoint[];
+} {
+  const projectMap = new Map<string, ProjectAccumulator>();
+  const globalPvMap = new Map<string, number>();
+  const globalSessMap = new Map<string, number>();
+  const globalVisMap = new Map<string, number>();
 
-    const existing = map.get(name);
+  for (const [day, dom, pvs, sess, vis] of allRows) {
+    if (!dom || dom.trim() === "") continue;
+
+    const mapping = resolveProject(dom);
+    const name = mapping?.name ?? dom;
+
+    // Global trends
+    addToTrendMap(globalPvMap, day, pvs);
+    addToTrendMap(globalSessMap, day, sess);
+    addToTrendMap(globalVisMap, day, vis);
+
+    // Per-project accumulation
+    const existing = projectMap.get(name);
     if (existing) {
-      existing.pageviews += d.pageviews;
-      existing.sessions += d.sessions;
-      existing.visitors += d.visitors;
-      if (!existing.domains.includes(d.domain)) {
-        existing.domains.push(d.domain);
-      }
+      existing.pageviews += pvs;
+      existing.sessions += sess;
+      existing.visitors += vis;
+      if (!existing.domains.includes(dom)) existing.domains.push(dom);
+      addToTrendMap(existing.pvMap, day, pvs);
+      addToTrendMap(existing.sessMap, day, sess);
+      addToTrendMap(existing.visMap, day, vis);
     } else {
-      map.set(name, {
+      const pvMap = new Map<string, number>();
+      const sessMap = new Map<string, number>();
+      const visMap = new Map<string, number>();
+      addToTrendMap(pvMap, day, pvs);
+      addToTrendMap(sessMap, day, sess);
+      addToTrendMap(visMap, day, vis);
+      projectMap.set(name, {
         name,
         url: mapping?.url,
         private: mapping?.private,
         color: mapping?.color ?? "#6B7280",
-        pageviews: d.pageviews,
-        sessions: d.sessions,
-        visitors: d.visitors,
-        domains: [d.domain],
+        pageviews: pvs,
+        sessions: sess,
+        visitors: vis,
+        domains: [dom],
+        pvMap,
+        sessMap,
+        visMap,
       });
     }
   }
 
-  return Array.from(map.values()).sort((a, b) => b.pageviews - a.pageviews);
+  const projects: ProjectStats[] = Array.from(projectMap.values())
+    .sort((a, b) => b.pageviews - a.pageviews)
+    .map(({ pvMap, sessMap, visMap, ...rest }) => ({
+      ...rest,
+      pvTrend: trendMapToPoints(pvMap),
+      sessTrend: trendMapToPoints(sessMap),
+      visTrend: trendMapToPoints(visMap),
+    }));
+
+  return {
+    projects,
+    pageviewsTrend: trendMapToPoints(globalPvMap),
+    sessionsTrend: trendMapToPoints(globalSessMap),
+    visitorsTrend: trendMapToPoints(globalVisMap),
+  };
 }
 
 export async function fetchAggregatedMetrics(): Promise<AggregatedMetrics> {
@@ -326,29 +284,22 @@ export async function fetchAggregatedMetrics(): Promise<AggregatedMetrics> {
     POSTHOG_PROJECT_IDS.map((id) => fetchProjectData(id))
   );
 
-  const fulfilled = results
+  const allRows: RawDomainDailyRow[] = results
     .filter((r) => r.status === "fulfilled")
-    .map((r) => (r as PromiseFulfilledResult<Awaited<ReturnType<typeof fetchProjectData>>>).value);
+    .flatMap((r) => (r as PromiseFulfilledResult<Awaited<ReturnType<typeof fetchProjectData>>>).value.rows);
 
-  const pageviewsTrend = mergeTrends(...fulfilled.map((f) => f.pvTrend));
-  const sessionsTrend = mergeTrends(...fulfilled.map((f) => f.sessTrend));
-  const visitorsTrend = mergeTrends(...fulfilled.map((f) => f.visTrend));
-  const allDomains = mergeDomains(...fulfilled.map((f) => f.domains));
-  const topProjects = groupDomainsIntoProjects(allDomains);
+  const { projects: topProjects, pageviewsTrend, sessionsTrend, visitorsTrend } = processAllRows(allRows);
 
   const totalPageviews = topProjects.reduce((s, p) => s + p.pageviews, 0);
   const totalSessions = topProjects.reduce((s, p) => s + p.sessions, 0);
   const totalVisitors = topProjects.reduce((s, p) => s + p.visitors, 0);
 
-  // Last 3 days totals from trends
   const sumLast3 = (trend: DailyPoint[]) =>
     trend.slice(-3).reduce((s, p) => s + p.value, 0);
 
   const recentPageviews = sumLast3(pageviewsTrend);
   const recentSessions = sumLast3(sessionsTrend);
   const recentVisitors = sumLast3(visitorsTrend);
-
-  const allProjectNames = topProjects.map((p) => p.name);
 
   return {
     totalPageviews,
@@ -361,7 +312,7 @@ export async function fetchAggregatedMetrics(): Promise<AggregatedMetrics> {
     sessionsTrend,
     visitorsTrend,
     topProjects,
-    allProjects: allProjectNames,
+    allProjects: topProjects.map((p) => p.name),
     fetchedAt: new Date().toISOString(),
   };
 }
