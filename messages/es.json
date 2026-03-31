@@ -42,6 +42,15 @@
   "footer": {
     "copyright": "© 2025 Nexans. Hecho con curiosidad y café."
   },
+  "projects": {
+    "title": "Proyectos",
+    "mana": { "name": "Mana", "description": "App para gestión de finanzas personales." },
+    "planify": { "name": "Planify", "description": "Agenda digital para salones de belleza en Argentina." },
+    "impuestito": { "name": "Impuestito", "description": "Web con simulaciones de impuestos en Argentina: impuesto a las ganancias, patentes, aportes patronales y más." },
+    "panauber": { "name": "PanaUber", "description": "Herramienta de seguimiento de ganancias para conductores de Uber." },
+    "libro": { "name": "Codex", "description": "Libro de matemáticas de bolsillo con temas múltiples, teórico formalista." },
+    "sitio": { "name": "Mi sitio web", "description": "Blog y portafolio personal." }
+  },
   "empty": {
     "emoji": "📊",
     "title": "No hay métricas disponibles.",

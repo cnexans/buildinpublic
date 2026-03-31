@@ -30,13 +30,13 @@ export default async function Home({
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="max-w-6xl mx-auto px-4 py-10 flex flex-col gap-10 flex-1 w-full">
+      <main className="max-w-4xl mx-auto px-4 py-10 flex flex-col gap-10 flex-1 w-full">
         {/* Hero */}
         <section>
-          <h1 className="text-4xl md:text-5xl font-bold font-serif tracking-tight mb-2">
+          <h1 className="text-4xl font-bold font-serif my-4">
             {t("hero.title")}
           </h1>
-          <p className="text-foreground font-serif">
+          <p className="text-lg leading-8 text-foreground font-serif">
             {t.rich("hero.description", {
               link: (chunks) => (
                 <a
@@ -50,6 +50,36 @@ export default async function Home({
               ),
             })}
           </p>
+        </section>
+
+        {/* Project Cards */}
+        <section>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { name: t("projects.planify.name"), description: t("projects.planify.description"), url: "https://planify.la", color: "#2563EB" },
+              { name: t("projects.mana.name"), description: t("projects.mana.description"), url: "https://mana.planify.la", color: "#8B5CF6" },
+              { name: t("projects.impuestito.name"), description: t("projects.impuestito.description"), url: "https://impuesti.to", color: "#059669" },
+              { name: t("projects.panauber.name"), description: t("projects.panauber.description"), url: "https://panauber.vercel.app", color: "#D97706" },
+              { name: t("projects.libro.name"), description: t("projects.libro.description"), url: "https://codex.cnexans.com", color: "#0891B2" },
+              { name: t("projects.sitio.name"), description: t("projects.sitio.description"), url: "https://cnexans.com", color: "#DB2777" },
+            ].map(({ name, description, url, color }) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block border border-border rounded-xl p-5 bg-card hover:border-foreground/30 transition-colors no-underline"
+                style={{ borderLeftColor: color, borderLeftWidth: "3px" }}
+              >
+                <p className="font-semibold text-foreground text-sm mb-1 group-hover:underline">
+                  {name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {description}
+                </p>
+              </a>
+            ))}
+          </div>
         </section>
 
         {/* Dashboard */}
