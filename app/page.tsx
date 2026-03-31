@@ -25,14 +25,12 @@ export default async function Home() {
       <main className="max-w-6xl mx-auto px-4 py-10 flex flex-col gap-10 flex-1 w-full">
         {/* Hero */}
         <section>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold font-serif tracking-tight mb-2">
             Mis proyectos
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground font-serif">
             Estos son los proyectos en los que trabajo. Aquí puedes ver sus métricas
             de tráfico en tiempo real, actualizadas cada hora.
-          </p>
-          <p className="text-xs text-muted-foreground/70 mt-1">
             El código fuente de esta página es{" "}
             <a
               href="https://github.com/cnexans/buildinpublic"

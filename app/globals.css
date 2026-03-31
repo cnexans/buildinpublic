@@ -4,7 +4,41 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: 'TeX Gyre Pagella';
+  src: url('/fonts/tex-gyre-pagella/texgyrepagella-regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TeX Gyre Pagella';
+  src: url('/fonts/tex-gyre-pagella/texgyrepagella-italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TeX Gyre Pagella';
+  src: url('/fonts/tex-gyre-pagella/texgyrepagella-bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TeX Gyre Pagella';
+  src: url('/fonts/tex-gyre-pagella/texgyrepagella-bolditalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 @theme inline {
+  --font-pagella: 'TeX Gyre Pagella', serif;
+  --font-serif: var(--font-pagella);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);

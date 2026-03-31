@@ -1,5 +1,7 @@
 "use client";
 
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
+
 const title = "CN.";
 
 const navItems = [
@@ -9,6 +11,22 @@ const navItems = [
   { name: "About", href: "https://cnexans.com/about" },
   { name: "Contact", href: "https://cnexans.com/contact" },
 ];
+
+function NavLink({ item }: { item: (typeof navItems)[number] }) {
+  if (item.href) {
+    return (
+      <a
+        href={item.href}
+        className="text-sm text-foreground no-underline hover:text-primary transition-colors"
+      >
+        {item.name}
+      </a>
+    );
+  }
+  return (
+    <span className="text-sm text-primary font-medium">{item.name}</span>
+  );
+}
 
 export function Header() {
   return (
@@ -25,25 +43,13 @@ export function Header() {
             </a>
           </div>
           <nav className="flex flex-wrap justify-center gap-4 sm:gap-6">
-            {navItems.map((item) =>
-              item.href ? (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="text-sm text-foreground no-underline hover:text-primary transition-colors"
-                >
-                  {item.name}
-                </a>
-              ) : (
-                <span
-                  key={item.name}
-                  className="text-sm text-primary font-medium"
-                >
-                  {item.name}
-                </span>
-              )
-            )}
+            {navItems.map((item) => (
+              <NavLink key={item.name} item={item} />
+            ))}
           </nav>
+          <div className="flex justify-center">
+            <ThemeSwitcher />
+          </div>
         </div>
 
         {/* Tablet Layout */}
@@ -56,25 +62,13 @@ export function Header() {
               {title}
             </a>
             <nav className="flex items-center gap-6">
-              {navItems.map((item) =>
-                item.href ? (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="text-sm text-foreground no-underline hover:text-primary transition-colors"
-                  >
-                    {item.name}
-                  </a>
-                ) : (
-                  <span
-                    key={item.name}
-                    className="text-sm text-primary font-medium"
-                  >
-                    {item.name}
-                  </span>
-                )
-              )}
+              {navItems.map((item) => (
+                <NavLink key={item.name} item={item} />
+              ))}
             </nav>
+          </div>
+          <div className="flex justify-center">
+            <ThemeSwitcher />
           </div>
         </div>
 
@@ -88,24 +82,10 @@ export function Header() {
               {title}
             </a>
             <nav className="flex items-center gap-8">
-              {navItems.map((item) =>
-                item.href ? (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="text-foreground no-underline hover:text-primary transition-colors"
-                  >
-                    {item.name}
-                  </a>
-                ) : (
-                  <span
-                    key={item.name}
-                    className="text-primary font-medium"
-                  >
-                    {item.name}
-                  </span>
-                )
-              )}
+              {navItems.map((item) => (
+                <NavLink key={item.name} item={item} />
+              ))}
+              <ThemeSwitcher />
             </nav>
           </div>
         </div>

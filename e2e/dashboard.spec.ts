@@ -4,28 +4,26 @@ test.describe("Dashboard", () => {
   test("loads without errors and displays key elements", async ({ page }) => {
     await page.goto("/");
 
-    // Verify no Next.js error overlay with error text is shown
+    // Verify no Next.js error overlay
     await expect(page.getByText("Unhandled Runtime Error")).not.toBeVisible();
 
-    // Header "mymetrics" is visible
-    await expect(page.getByText("mymetrics")).toBeVisible();
+    // Header logo "CN." is visible
+    await expect(page.getByRole("link", { name: "CN." })).toBeVisible();
 
-    // "Open metrics" heading is visible
+    // "Mis proyectos" heading is visible
     await expect(
-      page.getByRole("heading", { name: "Open metrics" })
+      page.getByRole("heading", { name: "Mis proyectos" })
     ).toBeVisible();
 
     // 3 KPI cards are present
-    await expect(page.getByText("Total Pageviews")).toBeVisible();
-    await expect(page.getByText("Visitantes Únicos", { exact: true })).toBeVisible();
-    await expect(page.getByText("Total Sesiones")).toBeVisible();
+    await expect(page.getByText("Pageviews")).toBeVisible();
+    await expect(page.getByText("Visitantes Únicos")).toBeVisible();
+    await expect(page.getByText("Sesiones")).toBeVisible();
 
-    // Domain filter button is present
-    await expect(
-      page.getByRole("button", { name: /dominio/i })
-    ).toBeVisible();
+    // Project filter is present
+    await expect(page.getByText(/proyecto/i)).toBeVisible();
 
-    // "Top Dominios" section is present
-    await expect(page.getByText("Top Dominios")).toBeVisible();
+    // "Top Proyectos" section is present
+    await expect(page.getByText("Top Proyectos")).toBeVisible();
   });
 });
