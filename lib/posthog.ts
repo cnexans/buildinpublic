@@ -284,9 +284,14 @@ export async function fetchAggregatedMetrics(): Promise<AggregatedMetrics> {
     POSTHOG_PROJECT_IDS.map((id) => fetchProjectData(id))
   );
 
-  const allRows: RawDomainDailyRow[] = results
-    .filter((r) => r.status === "fulfilled")
-    .flatMap((r) => (r as PromiseFulfilledResult<Awaited<ReturnType<typeof fetchProjectData>>>).value.rows);
+  const fulfilled = results.filter((r) => r.status === "fulfilled") as PromiseFulfilledResult<Awaited<ReturnType<typeof fetchProjectData>>>[];
+
+  if (fulfilled.length === 0) {
+    const errors = (results as PromiseRejectedResult[]).map((r) => r.reason).join("; ");
+    throw new Error(`All PostHog requests failed: ${errors}`);
+  }
+
+  const allRows: RawDomainDailyRow[] = fulfilled.flatMap((r) => r.value.rows);
 
   const { projects: topProjects, pageviewsTrend, sessionsTrend, visitorsTrend } = processAllRows(allRows);
 
