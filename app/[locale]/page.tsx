@@ -57,9 +57,7 @@ export default async function Home({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               { name: t("projects.planify.name"), description: t("projects.planify.description"), url: "https://planify.la", color: "#2563EB" },
-              { name: t("projects.mana.name"), description: t("projects.mana.description"), url: "https://mana.planify.la", color: "#8B5CF6" },
               { name: t("projects.impuestito.name"), description: t("projects.impuestito.description"), url: "https://impuesti.to", color: "#059669" },
-              { name: t("projects.panauber.name"), description: t("projects.panauber.description"), url: "https://panauber.vercel.app", color: "#D97706" },
               { name: t("projects.libro.name"), description: t("projects.libro.description"), url: "https://codex.cnexans.com", color: "#0891B2" },
               { name: t("projects.sitio.name"), description: t("projects.sitio.description"), url: "https://cnexans.com", color: "#DB2777" },
             ].map(({ name, description, url, color }) => (
