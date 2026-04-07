@@ -18,7 +18,7 @@ export type ProjectMapping = {
   color: string;
 };
 
-export const OTRAS_APLICACIONES = "Otras aplicaciones";
+export const OTRAS_APLICACIONES = "Mis sitios web";
 
 export const PROJECT_MAPPINGS: ProjectMapping[] = [
   {
@@ -38,23 +38,22 @@ export const PROJECT_MAPPINGS: ProjectMapping[] = [
   ...(process.env.PRIVATE_DOMAIN_PATTERNS
     ? [
         {
-          name: "Apps de particulares",
-          private: true,
+          name: "Mis sitios web",
           patterns: process.env.PRIVATE_DOMAIN_PATTERNS.split(",").map(
             (p) => new RegExp(p.trim(), "i")
           ),
-          color: "#DC2626",
+          color: "#DB2777",
         },
       ]
     : []),
   {
-    name: "Mi Libro de Matemática",
+    name: "Mis sitios web",
     url: "https://codex.cnexans.com",
     patterns: [/codex/i],
-    color: "#0891B2",
+    color: "#DB2777",
   },
   {
-    name: "Mi sitio web",
+    name: "Mis sitios web",
     url: "https://cnexans.com",
     patterns: [/cnexans\.com$/, /carlosnexans/i, /home-kohl/i],
     color: "#DB2777",
