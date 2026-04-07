@@ -22,13 +22,13 @@ export const OTRAS_APLICACIONES = "Mis sitios web";
 
 export const PROJECT_MAPPINGS: ProjectMapping[] = [
   {
-    name: "Planify",
+    name: "Planify.la",
     url: "https://planify.la",
     patterns: [/planify/i],
     color: "#2563EB",
   },
   {
-    name: "Impuestito",
+    name: "Impuesti.to",
     url: "https://impuesti.to",
     patterns: [/gananciasfacil/i, /impuesti\.to/i],
     color: "#059669",
