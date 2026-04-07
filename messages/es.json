@@ -45,12 +45,11 @@
   },
   "projects": {
     "title": "Proyectos",
-    "mana": { "name": "Mana", "description": "App para gestión de finanzas personales." },
     "planify": { "name": "Planify", "description": "Agenda digital para salones de belleza en Argentina." },
     "impuestito": { "name": "Impuestito", "description": "Web con simulaciones de impuestos en Argentina: impuesto a las ganancias, patentes, aportes patronales y más." },
-    "panauber": { "name": "PanaUber", "description": "Herramienta de seguimiento de ganancias para conductores de Uber." },
-    "libro": { "name": "Codex", "description": "Libro de matemáticas de bolsillo con temas múltiples, teórico formalista." },
-    "sitio": { "name": "Mi sitio web", "description": "Blog y portafolio personal." }
+    "libro": { "name": "Mi Libro de Matemáticas", "description": "Libro de matemáticas de bolsillo con temas múltiples, teórico formalista." },
+    "sitio": { "name": "Mi sitio web", "description": "Blog y portafolio personal." },
+    "otras": { "name": "Otras aplicaciones", "description": "Tráfico de otras aplicaciones y dominios." }
   },
   "empty": {
     "emoji": "📊",

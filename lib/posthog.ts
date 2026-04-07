@@ -18,13 +18,9 @@ export type ProjectMapping = {
   color: string;
 };
 
+export const OTRAS_APLICACIONES = "Otras aplicaciones";
+
 export const PROJECT_MAPPINGS: ProjectMapping[] = [
-  {
-    name: "Mana",
-    url: "https://mana.planify.la",
-    patterns: [/^mana\.planify\.la$/],
-    color: "#8B5CF6",
-  },
   {
     name: "Planify",
     url: "https://planify.la",
@@ -36,12 +32,6 @@ export const PROJECT_MAPPINGS: ProjectMapping[] = [
     url: "https://impuesti.to",
     patterns: [/gananciasfacil/i, /impuesti\.to/i],
     color: "#059669",
-  },
-  {
-    name: "PanaUber",
-    url: "https://panauber.vercel.app",
-    patterns: [/panauber/i],
-    color: "#D97706",
   },
   // Private domains configured via PRIVATE_DOMAIN_PATTERNS env var
   // (comma-separated patterns, e.g. "myapp,secret-project")
@@ -222,7 +212,7 @@ function processAllRows(allRows: RawDomainDailyRow[]): {
     if (!dom || dom.trim() === "") continue;
 
     const mapping = resolveProject(dom);
-    const name = mapping?.name ?? dom;
+    const name = mapping?.name ?? OTRAS_APLICACIONES;
 
     // Global trends
     addToTrendMap(globalPvMap, day, pvs);
@@ -250,7 +240,7 @@ function processAllRows(allRows: RawDomainDailyRow[]): {
         name,
         url: mapping?.url,
         private: mapping?.private,
-        color: mapping?.color ?? "#6B7280",
+        color: mapping?.color ?? "#6B7280", // gray for "Otras aplicaciones"
         pageviews: pvs,
         sessions: sess,
         visitors: vis,
